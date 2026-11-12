@@ -2,6 +2,9 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
+const VERIFY_TOKEN = "adaego123";
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
+const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID || "";
 
 const customers = new Map();
 const orders = [];
@@ -63,7 +66,18 @@ function handleMessage(phone, textRaw) {
   if (text === "4") return humanMsg();
   return `I no understand that one o 😅\n\n${mainMenu()}`;
 }
-
+// WhatsApp go use this to verify
+app.get('/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log("Webhook verified!");
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
+});
 app.post('/webhook', (req, res) => {
   const phone = req.body.phone || req.body.from || "test-user";
   const message = req.body.message || req.body.text || req.body.Body || "";
